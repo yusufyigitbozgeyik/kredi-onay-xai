@@ -236,8 +236,8 @@ Random Forest modeli seçildi çünkü:
 Ana Sayfa :
 ![Ana Sayfa](img/aryz1.png)
 Kredi sonucu tahmini ekranı :
-![Sonuç Ekranı] (img/aryz2.png)
-![Sonuç Ekranı] (img/aryz3.png)
+![Sonuç Ekranı](img/aryz2.png)
+![Sonuç Ekranı](img/aryz3.png)
 
 ## 📄 Lisans
 
