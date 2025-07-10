@@ -232,6 +232,13 @@ Random Forest modeli seçildi çünkü:
 3. Değişikliklerinizi commit edin
 4. Pull request gönderin
 
+## Arayüzden görseller
+Ana Sayfa :
+![Ana Sayfa](img/aryz1.png)
+Kredi sonucu tahmini ekranı :
+![Sonuç Ekranı] (img/aryz2.png)
+![Sonuç Ekranı] (img/aryz3.png)
+
 ## 📄 Lisans
 
 Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için `LICENSE` dosyasına bakın.
