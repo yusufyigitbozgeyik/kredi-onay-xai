@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kredi Onay Sistemi - XAI Destekli</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --light-bg: #ecf0f1;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .main-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin: 2rem auto;
+            overflow: hidden;
+        }
+
+        .header {
+            background: var(--primary-color);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-weight: 300;
+        }
+
+        .form-section {
+            padding: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control, .form-select {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 0.75rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+
+        .btn-predict {
+            background: linear-gradient(45deg, var(--secondary-color), #2980b9);
+            border: none;
+            border-radius: 10px;
+            padding: 1rem 2rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-predict:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3);
+        }
+
+        .result-section {
+            padding: 2rem;
+            background: var(--light-bg);
+            display: none;
+        }
+
+        .prediction-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .prediction-approved {
+            border-left: 5px solid var(--success-color);
+        }
+
+        .prediction-rejected {
+            border-left: 5px solid var(--danger-color);
+        }
+
+        .confidence-bar {
+            height: 20px;
+            border-radius: 10px;
+            background: #e9ecef;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            transition: width 1s ease;
+        }
+
+        .confidence-approved {
+            background: linear-gradient(90deg, var(--success-color), #2ecc71);
+        }
+
+        .confidence-rejected {
+            background: linear-gradient(90deg, var(--danger-color), #c0392b);
+        }
+
+        .explanation-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .feature-impact {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+
+        .feature-positive {
+            border-left: 4px solid var(--success-color);
+        }
+
+        .feature-negative {
+            border-left: 4px solid var(--danger-color);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--secondary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .alert {
+            border-radius: 10px;
+            border: none;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="main-container">
+                    <!-- Header -->
+                    <div class="header">
+                        <h1><i class="fas fa-chart-line me-3"></i>Kredi Onay Sistemi</h1>
+                        <p class="mb-0">Yapay Zeka Destekli Karar Verme ve Açıklanabilirlik</p>
+                    </div>
+
+                    <!-- Form Section -->
+                    <div class="form-section">
+                        <h3 class="mb-4"><i class="fas fa-edit me-2"></i>Kredi Başvuru Formu</h3>
+                        
+                        <form id="creditForm">
+                            <div class="row">
+                                <!-- Kişisel Bilgiler -->
+                                <div class="col-md-6">
+                                    <h5 class="text-primary mb-3"><i class="fas fa-user me-2"></i>Kişisel Bilgiler</h5>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">Yaş</label>
+                                        <input type="number" class="form-control" id="yas" name="yas" min="18" max="100" required>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Aylık Gelir (TL)</label>
+                                        <input type="number" class="form-control" id="gelir" name="gelir" min="0" required>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Çalışma Durumu</label>
+                                        <select class="form-select" id="calisma_durumu" name="calisma_durumu" required>
+                                            <option value="">Seçiniz</option>
+                                            <option value="Çalışıyor">Çalışıyor</option>
+                                            <option value="İşsiz">İşsiz</option>
+                                            <option value="Emekli">Emekli</option>
+                                            <option value="Öğrenci">Öğrenci</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Eğitim Seviyesi</label>
+                                        <select class="form-select" id="egitim" name="egitim" required>
+                                            <option value="">Seçiniz</option>
+                                            <option value="Lise">Lise</option>
+                                            <option value="Yüksek">Yüksek</option>
+                                            <option value="Lisans">Lisans</option>
+                                            <option value="Doktora">Doktora</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Medeni Durum</label>
+                                        <select class="form-select" id="medeni_durum" name="medeni_durum" required>
+                                            <option value="">Seçiniz</option>
+                                            <option value="Bekar">Bekar</option>
+                                            <option value="Evli">Evli</option>
+                                            <option value="Dul">Dul</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Kredi Bilgileri -->
+                                <div class="col-md-6">
+                                    <h5 class="text-primary mb-3"><i class="fas fa-credit-card me-2"></i>Kredi Bilgileri</h5>
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label">Kredi Tutarı (TL)</label>
+                                        <input type="number" class="form-control" id="kredi_tutari" name="kredi_tutari" min="0" required>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Kredi Süresi (Ay)</label>
+                                        <select class="form-select" id="kredi_suresi_ay" name="kredi_suresi_ay" required>
+                                            <option value="">Seçiniz</option>
+                                            <option value="12">12 Ay</option>
+                                            <option value="18">18 Ay</option>
+                                            <option value="24">24 Ay</option>
+                                            <option value="36">36 Ay</option>
+                                            <option value="48">48 Ay</option>
+                                            <option value="60">60 Ay</option>
+                                            <option value="72">72 Ay</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Mevcut Borç (TL)</label>
+                                        <input type="number" class="form-control" id="mevcut_borc" name="mevcut_borc" min="0" required>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Ev Sahibi</label>
+                                        <select class="form-select" id="ev_sahibi" name="ev_sahibi" required>
+                                            <option value="">Seçiniz</option>
+                                            <option value="Evet">Evet</option>
+                                            <option value="Hayır">Hayır</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Kredi Geçmişi</label>
+                                        <select class="form-select" id="kredi_gecmisi" name="kredi_gecmisi" required>
+                                            <option value="">Seçiniz</option>
+                                            <option value="Temiz">Temiz</option>
+                                            <option value="Yeni">Yeni</option>
+                                            <option value="Gecikmeli">Gecikmeli</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="text-center mt-4">
+                                <button type="submit" class="btn btn-primary btn-predict">
+                                    <i class="fas fa-magic me-2"></i>Kredi Onayını Kontrol Et
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Loading -->
+                    <div class="loading" id="loading">
+                        <div class="spinner"></div>
+                        <p>Yapay zeka analizi yapılıyor...</p>
+                    </div>
+
+                    <!-- Results Section -->
+                    <div class="result-section" id="resultSection">
+                        <h3 class="mb-4"><i class="fas fa-chart-pie me-2"></i>Analiz Sonuçları</h3>
+                        
+                        <!-- Prediction Card -->
+                        <div class="prediction-card" id="predictionCard">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h4 id="predictionTitle">Kredi Onay Durumu</h4>
+                                    <p class="text-muted" id="predictionSubtitle">Yapay zeka modelimiz tarafından hesaplanan sonuç</p>
+                                    
+                                    <div class="confidence-bar">
+                                        <div class="confidence-fill" id="confidenceBar"></div>
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-between">
+                                        <span>Güven: <strong id="confidenceText">0%</strong></span>
+                                        <span id="probabilityText">Onay: 0% | Ret: 0%</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 text-center">
+                                    <div id="predictionIcon" style="font-size: 4rem;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SHAP Explanation -->
+                        <div class="explanation-section">
+                            <h5><i class="fas fa-lightbulb me-2"></i>Karar Açıklaması (SHAP)</h5>
+                            <p class="text-muted">Aşağıdaki faktörler kararınızı en çok etkileyen özelliklerdir:</p>
+                            <div id="shapExplanation"></div>
+                        </div>
+
+                        <!-- Probability Chart -->
+                        <div class="explanation-section">
+                            <h5><i class="fas fa-chart-bar me-2"></i>Olasılık Dağılımı</h5>
+                            <div class="chart-container">
+                                <canvas id="probabilityChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let probabilityChart;
+
+        document.getElementById('creditForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('resultSection').style.display = 'none';
+            
+            // Collect form data
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            // Convert numeric fields
+            data.yas = parseInt(data.yas);
+            data.gelir = parseInt(data.gelir);
+            data.kredi_tutari = parseInt(data.kredi_tutari);
+            data.kredi_suresi_ay = parseInt(data.kredi_suresi_ay);
+            data.mevcut_borc = parseInt(data.mevcut_borc);
+            
+            try {
+                const response = await fetch('/api/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    displayResults(result);
+                } else {
+                    throw new Error(result.error || 'Bir hata oluştu');
+                }
+            } catch (error) {
+                showError('Tahmin sırasında bir hata oluştu: ' + error.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        });
+
+        function displayResults(result) {
+            const resultSection = document.getElementById('resultSection');
+            const predictionCard = document.getElementById('predictionCard');
+            const predictionTitle = document.getElementById('predictionTitle');
+            const predictionSubtitle = document.getElementById('predictionSubtitle');
+            const predictionIcon = document.getElementById('predictionIcon');
+            const confidenceBar = document.getElementById('confidenceBar');
+            const confidenceText = document.getElementById('confidenceText');
+            const probabilityText = document.getElementById('probabilityText');
+            
+            // Update prediction card
+            if (result.prediction === 1) {
+                predictionCard.className = 'prediction-card prediction-approved';
+                predictionTitle.innerHTML = '<i class="fas fa-check-circle text-success me-2"></i>Kredi Onaylandı!';
+                predictionSubtitle.textContent = 'Tebrikler! Kredi başvurunuz onaylandı.';
+                predictionIcon.innerHTML = '<i class="fas fa-check-circle text-success"></i>';
+                confidenceBar.className = 'confidence-fill confidence-approved';
+            } else {
+                predictionCard.className = 'prediction-card prediction-rejected';
+                predictionTitle.innerHTML = '<i class="fas fa-times-circle text-danger me-2"></i>Kredi Reddedildi';
+                predictionSubtitle.textContent = 'Maalesef kredi başvurunuz reddedildi.';
+                predictionIcon.innerHTML = '<i class="fas fa-times-circle text-danger"></i>';
+                confidenceBar.className = 'confidence-fill confidence-rejected';
+            }
+            
+            // Update confidence
+            const confidence = Math.round(result.confidence * 100);
+            confidenceBar.style.width = confidence + '%';
+            confidenceText.textContent = confidence + '%';
+            
+            // Update probabilities
+            const onayProb = Math.round(result.probability.onay * 100);
+            const retProb = Math.round(result.probability.ret * 100);
+            probabilityText.textContent = `Onay: ${onayProb}% | Ret: ${retProb}%`;
+            
+            // Display SHAP explanation
+            displaySHAPExplanation(result.shap_explanation);
+            
+            // Display probability chart
+            displayProbabilityChart(result.probability);
+            
+            // Show results
+            resultSection.style.display = 'block';
+        }
+
+        function displaySHAPExplanation(shapData) {
+            const container = document.getElementById('shapExplanation');
+            container.innerHTML = '';
+            
+            const sortedFeatures = Object.entries(shapData)
+                .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
+                .slice(0, 8);
+            
+            sortedFeatures.forEach(([feature, value]) => {
+                const impact = document.createElement('div');
+                impact.className = `feature-impact ${value > 0 ? 'feature-positive' : 'feature-negative'}`;
+                
+                const featureName = formatFeatureName(feature);
+                const impactText = value > 0 ? 'Pozitif Etki' : 'Negatif Etki';
+                const impactIcon = value > 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+                
+                impact.innerHTML = `
+                    <div>
+                        <strong>${featureName}</strong>
+                        <br><small class="text-muted">${impactText}</small>
+                    </div>
+                    <div class="text-end">
+                        <i class="fas ${impactIcon} ${value > 0 ? 'text-success' : 'text-danger'}"></i>
+                        <br><small>${Math.abs(value).toFixed(3)}</small>
+                    </div>
+                `;
+                
+                container.appendChild(impact);
+            });
+        }
+
+        function formatFeatureName(feature) {
+            const nameMap = {
+                'yas': 'Yaş',
+                'gelir': 'Gelir',
+                'kredi_tutari': 'Kredi Tutarı',
+                'kredi_suresi_ay': 'Kredi Süresi',
+                'mevcut_borc': 'Mevcut Borç',
+                'borc_gelir_orani': 'Borç/Gelir Oranı',
+                'kredi_gelir_orani': 'Kredi/Gelir Oranı',
+                'calisma_durumu_Çalışıyor': 'Çalışma Durumu: Çalışıyor',
+                'calisma_durumu_İşsiz': 'Çalışma Durumu: İşsiz',
+                'calisma_durumu_Emekli': 'Çalışma Durumu: Emekli',
+                'calisma_durumu_Öğrenci': 'Çalışma Durumu: Öğrenci',
+                'egitim_Lisans': 'Eğitim: Lisans',
+                'egitim_Doktora': 'Eğitim: Doktora',
+                'egitim_Yüksek': 'Eğitim: Yüksek',
+                'egitim_Lise': 'Eğitim: Lise',
+                'medeni_durum_Bekar': 'Medeni Durum: Bekar',
+                'medeni_durum_Evli': 'Medeni Durum: Evli',
+                'medeni_durum_Dul': 'Medeni Durum: Dul',
+                'ev_sahibi_Evet': 'Ev Sahibi: Evet',
+                'ev_sahibi_Hayır': 'Ev Sahibi: Hayır',
+                'kredi_gecmisi_Temiz': 'Kredi Geçmişi: Temiz',
+                'kredi_gecmisi_Yeni': 'Kredi Geçmişi: Yeni',
+                'kredi_gecmisi_Gecikmeli': 'Kredi Geçmişi: Gecikmeli'
+            };
+            
+            return nameMap[feature] || feature;
+        }
+
+        function displayProbabilityChart(probabilities) {
+            const ctx = document.getElementById('probabilityChart').getContext('2d');
+            
+            if (probabilityChart) {
+                probabilityChart.destroy();
+            }
+            
+            probabilityChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Onay', 'Ret'],
+                    datasets: [{
+                        data: [probabilities.onay, probabilities.ret],
+                        backgroundColor: ['#27ae60', '#e74c3c'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function showError(message) {
+            const resultSection = document.getElementById('resultSection');
+            resultSection.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>${message}
+                </div>
+            `;
+            resultSection.style.display = 'block';
+        }
+    </script>
+</body>
+</html> 
