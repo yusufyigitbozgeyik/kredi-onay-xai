@@ -222,9 +222,9 @@ Random Forest modeli seçildi çünkü:
 ## 📞 İletişim ve Destek
 
 ### Geliştirici
-- **Ad:** [Adınız]
-- **E-posta:** [e-posta@adres.com]
-- **GitHub:** [github.com/kullaniciadi]
+- **Ad:** [yusufyigitbozgeyik]
+- **E-posta:** [yusufyigitbozgeyik@gmail.com]
+- **GitHub:** [github.com/yusufyigitbozgeyik]
 
 ### Katkıda Bulunma
 1. Fork yapın
@@ -239,16 +239,9 @@ Kredi sonucu tahmini ekranı :
 ![Sonuç Ekranı](img/aryz2.png)
 ![Sonuç Ekranı](img/aryz3.png)
 
-## 📄 Lisans
 
-Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için `LICENSE` dosyasına bakın.
 
-## 🙏 Teşekkürler
 
-- Scikit-learn ekibine
-- SHAP ve LIME geliştiricilerine
-- Flask ve Bootstrap topluluklarına
-- Veri setini sağlayan kuruma
 
 ---
 
